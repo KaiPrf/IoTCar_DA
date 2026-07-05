@@ -1,55 +1,114 @@
-# Teilaufgabe Schüler Barodscheff
-\textauthor{Joltawan Barodscheff}
+# Teilaufgabe Schüler Pripfl
 
-Dieses Kapitel wird oft auch als _Literaturrecherche_ bezeichnet. Da gehört alles rein was der __normale__ Leser braucht um den praktischen Ansatz zu verstehen. Das bedeutet Sie brauchen einen roten Faden !
+\textauthor{Chloe Pripfl}
 
-Das sind z.B: allgemeine Definitionen, Beschreibung von fachspezifischen Vorgehensweisen, Frameworks, Theorie zu verwendeten Algorithmen, besondere Umstände, ...
 
-## Praktische Arbeit
 
-> Hier beschreiben Sie ihren praktischen Teil. Es geht darum seine Implementierung / Versuche so darzustellen dass anhand dieser dre Leser erkennen kann was sie wie gemacht haben.
+## Einleitung
 
-Die Frage nach der Detailgenauigkeit lässt sich wie folgt beantworten: So, dass man Ihre Aufgabenstellung vollständig  nachvollziehen kann wenn man nur diese Diplomarbeit in Händen hat!
+Das IoT-Car hat bislang noch keine produktive Verwendung gefunden. Zu Beginn der Diplomarbeit kann das Fahrzeug ausschließlich mithilfe einer Carson ModelSport Fernbedienung gesteuert werden. Zudem sind die Jumperkabel, welche die Sensoren mit dem verbauten Raspberry Pi verbinden, aktuell nicht angeschlossen.
 
-### Messergebnisse
+Ziel dieser Teilaufgabe ist es, eine technische Basis für die weitere Arbeit zu schaffen. Dazu werden folgende Schritte umgesetzt:
 
-![Ein PNG Bild\label{fig:png_bild}](img/graph.png){width=70%} 
+* Wiederverbinden der Jumperkabel zu den Sensoren
+* Aufsetzen von ROS 2 auf dem Raspberry Pi
+* Einbindung und Bereitstellung der Kamerasicht des Fahrzeugs
+* Implementierung einer Smartphone‑basierten Steuerung
 
-Bilder sind so scharf wie möglich darzustellen. Unnötige Dinge (welche für den Leser keine Information liefern) sind wegzuschneiden. Üblicherweise versucht das Framework Bilder möglichst gut und vollflächig in die Seite einzupassen - was aber speziell bei kleinen Bildern keinen Sinn macht. Daher kann man die Breite des Bildes `{width=xx%}` beeinflussen. Generell macht es keinen Sinn reisen Bilder mit dieser Funktion niederzuskalieren, sondern eher die Bilder schon vorher mittels eines Bildbearbeitungsprogrammes niederzurechnen. Damit wird das endgültige PDF nicht so groß.
 
-### Etwas Fliesstext
 
-We'll put some happy little leaves here and there. Poor old tree. Have fun with it. Isn't that fantastic? You can just push a little tree out of your brush like that.
+## Theorieteil
 
-Making all those little fluffies that live in the clouds. If there's two big trees invariably sooner or later there's gonna be a little tree. There is no right or wrong - as long as it makes you happy and doesn't hurt anyone. Use absolutely no pressure. Just like an angel's wing. This is the time to get out all your flustrations, much better than kicking the dog around the house or taking it out on your spouse. I guess I'm a little weird. I like to talk to trees and animals. That's okay though; I have more fun than most people.
+### ROS 2
 
-\todo{Noch weitere Infos einholen}
+#### Was ist ROS?
 
-Do an almighty painting with us. Learn when to stop. Absolutely no pressure. You are just a whisper floating across a mountain. As trees get older they lose their chlorophyll. Clouds are free. They just float around the sky all day and have fun.
+ROS (Robot Operating System) ist ein Open‑Source‑Framework, das Bibliotheken, Werkzeuge und Kommunikationsmechanismen zur Entwicklung von Roboteranwendungen bereitstellt. Es vereinfacht die Programmierung komplexer Systeme und ermöglicht eine modulare, wiederverwendbare und skalierbare Softwarearchitektur.
 
-Now a hierarchical tree from this repo:
+[@ROS2]
 
-\dirtree{%
-.1 ./.
-.2 example.
-.3 ....
-.2 style.
-.3 ....
-.2 tools.
-.3 docker.
-.3 github.
-.2 Jenkinsfile.
-.2 Makefile.
-.2 REAMDE.md.
-}
+#### Grundidee und Architektur (ROS vs. ROS 2)
 
-A fan brush can be your best friend. Sometimes you learn more from your mistakes than you do from your masterpieces. You can bend rivers. But when I get home, the only thing I have power over is the garbage. Don't kill all your dark areas - you need them to show the light. There's nothing wrong with having a tree as a friend.
+ROS basiert auf einem verteilten System aus sogenannten **Nodes**. Ein Node ist ein einzelnes Programm, das eine klar definierte Teilaufgabe übernimmt, beispielsweise Sensorauswertung oder Motorsteuerung. In ROS 2 wurde dieses Konzept erweitert: Innerhalb eines Prozesses können mehrere Nodes betrieben werden. Zusätzlich wurden **Lifecycle‑Nodes** eingeführt, die definierte Zustände wie *unconfigured*, *inactive* und *active* besitzen.
 
-God gave you this gift of imagination. Use it. Use your imagination, let it go. Put your feelings into it, your heart, it's your world. There's not a thing in the world wrong with washing your brush. Happy painting, God bless. All those little son of a guns.
+In ROS 1 existiert ein zentraler **Master**, der für die Namensregistrierung und ‑auflösung im sogenannten Computation Graph zuständig ist. Ohne diesen Master können Nodes einander nicht finden und nicht miteinander kommunizieren. ROS 2 verzichtet auf einen zentralen Master; Discovery und Kommunikation erfolgen vollständig dezentral, was die Ausfallsicherheit erhöht.
 
-I sincerely wish for you every possible joy life could bring. Everybody needs a friend. That's crazy.
+Der **Parameter Server** dient zur Speicherung von Konfigurationswerten in Form von Schlüssel‑Wert‑Paaren. Während dieser in ROS 1 Teil des Masters ist, sind Parameter in ROS 2 node‑lokal organisiert.
 
-If you don't like it - change it. It's your world. Isn't it great to do something you can't fail at? Play with the angles. See how easy it is to create a little tree right in your world. This piece of canvas is your world. This painting comes right out of your heart.
+Die Kommunikation zwischen Nodes erfolgt über **Messages**, welche strukturierte und typisierte Daten enthalten. Unterstützt werden primitive Datentypen, Arrays sowie verschachtelte Strukturen.
+
+Messages werden über ein Transportsystem mit Publish‑/Subscribe‑Semantik übertragen:
+
+* Ein Node veröffentlicht Daten auf einem **Topic** (*publish*).
+* Andere Nodes können dieses Topic abonnieren (*subscribe*).
+
+ROS 2 erweitert dieses Modell um **Quality‑of‑Service‑Mechanismen (QoS)**, mit denen Zuverlässigkeit, Latenz und Echtzeitverhalten gezielt gesteuert werden können.
+
+Für klassische Anfrage‑/Antwort‑Kommunikation stehen **Services** zur Verfügung. Ein Service besteht aus einer Request‑ und einer Reply‑Message. Für langlaufende Aufgaben mit Statusrückmeldungen werden in ROS 2 zusätzlich **Actions** verwendet.
+
+**ROS Bags** sind Dateiformate zum Aufzeichnen und Wiedergeben von ROS‑Nachrichten. Sie werden insbesondere zur Analyse, Fehlersuche und Entwicklung genutzt. ROS 2 verwendet hierfür ein neues Backend mit Unterstützung mehrerer Speicherformate, wie z. B. SQLite.
+
+[@ROS-Architektur] & [@ROSvsROS2-Architektur]
+
+
+
+#### Warum ROS 2?
+
+ROS 2 wurde entwickelt, um den Anforderungen moderner Robotik‑ und IoT‑Systeme gerecht zu werden. Ein wesentlicher Vorteil ist die dezentrale Architektur ohne zentralen Master, wodurch das System robuster gegenüber Ausfällen wird.
+
+Ein weiterer wichtiger Aspekt ist die verbesserte Echtzeitfähigkeit. Durch QoS‑Einstellungen und die Unterstützung von Echtzeit‑Betriebssystemen kann ROS 2 auch in zeitkritischen Anwendungen eingesetzt werden. Für das IoT‑Car bedeutet dies eine zuverlässigere Steuerung und stabilere Verarbeitung von Sensor‑ und Kameradaten.
+
+Zusätzlich ist ROS 2 besser für Embedded‑Plattformen wie den Raspberry Pi geeignet. Der geringere Ressourcenverbrauch, moderne Sicherheitsmechanismen und flexible Kommunikationsparameter machen ROS 2 zur idealen Wahl für dieses Projekt.
+
+
+
+#### ROS 2 Jazzy Jalisco
+
+In dieser Diplomarbeit wird **ROS 2 Jazzy Jalisco** verwendet. Dabei handelt es sich um eine Long‑Term‑Support‑(LTS)‑Version, die über einen längeren Zeitraum mit Sicherheits‑ und Fehlerupdates versorgt wird.
+
+ROS 2 Jazzy basiert auf **Ubuntu 24.04 LTS** und nutzt aktuelle Systembibliotheken sowie moderne Compiler. Dadurch werden eine höhere Performance, bessere Sicherheit und eine gute Kompatibilität mit aktueller Hardware gewährleistet.
+
+In Kombination mit einem Echtzeit‑Kernel (PREEMPT‑RT) eignet sich ROS 2 Jazzy besonders für zeitkritische Anwendungen wie die Steuerung eines IoT‑Cars. Steuerbefehle, Sensordaten und Kamerastreams können mit geringerer Latenz und höherer Zuverlässigkeit verarbeitet werden.
+
+Darüber hinaus bietet Jazzy eine ausgereifte Integration der DDS‑Middleware (Data Distribution Service), welche eine skalierbare und flexible Kommunikation zwischen verteilten Komponenten ermöglicht.
+
+
+
+### Raspberry‑Pi‑Image
+
+Das **ros‑realtime‑rpi4‑image** ist ein vorkonfiguriertes Betriebssystem‑Image für Raspberry‑Pi‑Geräte, das speziell für Robotik‑ und Echtzeit‑Anwendungen mit ROS 2 entwickelt wurde.
+
+#### Enthaltene Software und Eigenschaften
+
+Das Image basiert auf **Ubuntu Server 24.04 (64‑Bit)** und verzichtet bewusst auf eine grafische Benutzeroberfläche. Dadurch werden Systemressourcen geschont, was insbesondere auf leistungsschwächeren Plattformen wie dem Raspberry Pi 3 von Vorteil ist.
+
+ROS 2 Jazzy ist vollständig vorinstalliert. Nach dem ersten Start steht die komplette ROS‑2‑Laufzeitumgebung sofort zur Verfügung, inklusive aller zentralen Werkzeuge zur Paketverwaltung und Kommunikation.
+
+Ein wesentliches Merkmal ist der verwendete Linux‑Kernel mit **PREEMPT‑RT‑Patch**, der nicht‑deterministische Verzögerungen reduziert und zeitkritische Prozesse bevorzugt behandelt. Dies verbessert die Stabilität von Steuerungs‑ und Kommunikationsabläufen erheblich.
+
+Der SSH‑Zugriff ist standardmäßig aktiviert. Der voreingestellte Benutzername lautet *ubuntu*, ebenso das initiale Passwort, welches beim ersten Login geändert werden muss.
+
+
+
+### Kameraanbindung in ROS 2
+
+Die Kamera des IoT‑Cars wird in ROS 2 als eigener Node betrieben. Dieser erfasst kontinuierlich Bilddaten und veröffentlicht diese als Messages auf einem Topic, beispielsweise */camera/image_raw*.
+
+Für die Bilddaten werden standardisierte Message‑Typen aus dem Paket **sensor_msgs** verwendet. Dadurch ist eine einfache Weiterverarbeitung der Kameradaten möglich, etwa für spätere Erweiterungen wie Hinderniserkennung oder Spurverfolgung.
+
+
+
+### Smartphone‑Anbindung und IoT‑Konzepte
+
+Die Steuerung des IoT‑Cars über ein Smartphone stellt eine typische IoT‑Anwendung dar. Das Smartphone fungiert als Benutzeroberfläche, während der Raspberry Pi die eigentliche Steuerungslogik übernimmt.
+
+Die Kommunikation kann über das Protokoll **MQTT** erfolgen, welches speziell für ressourcenschonende und zuverlässige Nachrichtenübertragung entwickelt wurde. Steuerbefehle werden dabei als Nachrichten an definierte Topics gesendet und von einem ROS‑2‑Node auf dem Raspberry Pi empfangen und umgesetzt.
+
+Durch die Kombination von ROS 2 und MQTT entsteht ein modulares und flexibel erweiterbares System, das sich für Fernsteuerung, Statusanzeigen und spätere autonome Funktionen eignet.
+
+
+
+# Praxisteil
 
 
 
