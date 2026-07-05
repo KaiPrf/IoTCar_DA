@@ -1,5 +1,4 @@
-# Diplomarbeit_{JAHR}: {Diplomarbeitsname}
+# Diplomarbeit_2026: IoTCar
 
-Hier kommit eine kurze Beschreibung Ihrer Diplomarbeit hin, damit die Besucher Ihres Repositories wissen worum es geht.
-
-Hilfe zu Benutzung dieses Templates finden Sie in der Datei [USAGE.md](USAGE.md)
+Die Aufgabe dieser Arbeit ist es, das bereitgestellte IoTCar so zu bearbeiten, dass es mit einem Smartphone 
+steuerbar ist und man eine Bildübertragung der eingebauten Kamera hat.
